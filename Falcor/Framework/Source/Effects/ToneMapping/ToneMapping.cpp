@@ -327,7 +327,7 @@ namespace Falcor
             pGui->addSeparator();
 
             const char* keyStr[4][2] = {
-                {"EV", "EV: "},
+                {"EV100", "EV100: "},
                 {"luminance", "Luminance Accroding To EV100: "},
                 {"exposure", "Exposure: "},
                 {"avgLuminance", "Average Luminance: "},

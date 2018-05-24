@@ -41,7 +41,7 @@ struct Stats
 {
     float exposure;
     float avgLuminance;
-    float EV;
+    float EV100;
     float luminance;
 };
 
@@ -62,14 +62,14 @@ float3 calcExposedColor(float3 color, float2 texC)
     float2 avgLogLuminance = gLuminanceTex.SampleLevel(gLuminanceTexSampler, texC, 0).rg;
     float avgLuminance = exp2(avgLogLuminance.r / avgLogLuminance.g);
 
-    float EV;
+    float EV100;
     float exposure;
-    float3 exposedColor = getExposedColor(gCamSettings, color, avgLuminance, exposure, EV);
+    float3 exposedColor = getExposedColor(gCamSettings, color, avgLuminance, exposure, EV100);
 
     gExposureStats[0].exposure = exposure;
     gExposureStats[0].avgLuminance = avgLuminance;
-    gExposureStats[0].EV = EV;
-    gExposureStats[0].luminance = convertEV100ToLuminance(EV);
+    gExposureStats[0].EV100 = EV100;
+    gExposureStats[0].luminance = convertEV100ToLuminance(EV100);
 
     return exposedColor;
 }

@@ -30,6 +30,18 @@ float getStandardOutputBasedExposure(float aperture,
     return middleGrey / l_avg;
 }
 
+float computeEV100(float aperture, float shutterSpeed, float ISO)
+{
+    // EV number is defined as:
+    // 2^EV_s = N^2 / t and EV_s = EV_100 + log2(S /100)
+    // This gives
+    // EV_s = log2(N^2 / t)
+    // EV_100 + log2(S /100) = log2(N^2 / t)
+    // EV_100 = log2(N^2 / t) - log2(S /100)
+    // EV_100 = log2(N^2 / t * 100 / S)
+    return log2((aperture * aperture) / shutterSpeed * 100 / ISO);
+}
+
 float computeEV100FromAvgLuminance(float avgLuminance)
 {
     // We later use the middle gray at 12.7% in order to have
@@ -46,7 +58,7 @@ float convertEV100ToLuminance(float EV100)
     return exp2(EV100) * 12.5f / 100.0f;
 }
 
-float convertEV100ToExposure(float EV100)
+float convertEV100ToExposure_SBS(float EV100)
 {
     // Compute the maximum luminance possible with H_sbs sensitivity
     // maxLum = 78 / ( S * q ) * N^2 / t
@@ -58,35 +70,35 @@ float convertEV100ToExposure(float EV100)
     return 1.0f / maxLuminance;
 }
 
-float calcExposure(CameraSettings cameraSettings, float avgLuminance, out float EV)
+float calcExposure(CameraSettings cameraSettings, float avgLuminance, out float EV100)
 {
     float exposure = 0.0f;
 
     if (cameraSettings.exposureMode == ExposureMode_Manual_SBS)
     {
         exposure = getSaturationBasedExposure(cameraSettings.aperture, cameraSettings.shutterSpeed, cameraSettings.ISO);
-        EV = log2((cameraSettings.aperture * cameraSettings.aperture) / cameraSettings.shutterSpeed);
+        EV100 = computeEV100(cameraSettings.aperture, cameraSettings.shutterSpeed, cameraSettings.ISO);
     }
     else if (cameraSettings.exposureMode == ExposureMode_Manual_SOS)
     {
 		float middleGrey = 0.18f;
         exposure = getStandardOutputBasedExposure(cameraSettings.aperture, cameraSettings.shutterSpeed, cameraSettings.ISO, middleGrey);
-        EV = log2((cameraSettings.aperture * cameraSettings.aperture) / cameraSettings.shutterSpeed);
+        EV100 = computeEV100(cameraSettings.aperture, cameraSettings.shutterSpeed, cameraSettings.ISO);
     }
     else
     {
-        float autoEV = computeEV100FromAvgLuminance(avgLuminance);
-        exposure = convertEV100ToExposure(autoEV);
-        EV = autoEV;
+        float autoEV100 = computeEV100FromAvgLuminance(avgLuminance);
+        exposure = convertEV100ToExposure_SBS(autoEV100);
+        EV100 = autoEV100;
     }
 
     return exposure;
 }
 
 // Determines the color based on exposure settings
-float3 getExposedColor(CameraSettings cameraSettings, float3 color, float avgLuminance, out float exposure, out float EV)
+float3 getExposedColor(CameraSettings cameraSettings, float3 color, float avgLuminance, out float exposure, out float EV100)
 {
-    exposure = calcExposure(cameraSettings, avgLuminance, EV);
+    exposure = calcExposure(cameraSettings, avgLuminance, EV100);
     return exposure * color;
 }
 
