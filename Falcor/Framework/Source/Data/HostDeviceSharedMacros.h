@@ -168,5 +168,11 @@
 #define M_PI2    6.28318530717958647692
 #define M_INV_PI 0.3183098861837906715
 
+
+#define ExposureMode_Manual_SBS 0
+#define ExposureMode_Manual_SOS 1
+#define ExposureMode_Automatic  2
+
+
 #endif //_HOST_DEVICE_SHARED_MACROS_H
 

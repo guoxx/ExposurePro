@@ -29,9 +29,10 @@
 
 using namespace Falcor;
 
-const Gui::DropdownList ExposurePlayground::kImageList = { { HdrImage::EveningSun, "Evening Sun" },
-                                                    { HdrImage::AtTheWindow, "Window" },
-                                                    { HdrImage::OvercastDay, "Overcast Day" } };
+const Gui::DropdownList ExposurePlayground::kImageList = {
+    { HdrImage::Radiometry, "Radiometry" },
+    { HdrImage::Photometry, "Photometry" },
+};
 
 void ExposurePlayground::onLoad(SampleCallbacks* pSample, RenderContext::SharedPtr pRenderContext)
 {
@@ -57,6 +58,7 @@ bool ExposurePlayground::loadImage(SampleCallbacks* pSample)
     if (mHdrFilename.length() > 0)
     {
         mpHdrImage = createTextureFromFile(mHdrFilename, false, mIsHdrImageSRGB, Resource::BindFlags::ShaderResource);
+        resizeHdrFbo(mpHdrImage->getWidth(), mpHdrImage->getHeight());
         pSample->resizeSwapChain(mpHdrImage->getWidth(), mpHdrImage->getHeight());
         return true;
     }
@@ -65,7 +67,7 @@ bool ExposurePlayground::loadImage(SampleCallbacks* pSample)
 
 void ExposurePlayground::onGuiRender(SampleCallbacks* pSample, Gui* pGui)
 {
-    if (pGui->beginGroup("Input HDR Image"))
+    if (pGui->beginGroup("Scene Referred Image"))
     {
         if (pGui->addButton("Load HDR Image"))
         {
@@ -78,6 +80,12 @@ void ExposurePlayground::onGuiRender(SampleCallbacks* pSample, Gui* pGui)
         if (pGui->addCheckBox("sRGB", mIsHdrImageSRGB))
         {
             loadImage(pSample);
+        }
+
+        uint32_t uHdrUnit = static_cast<uint32_t>(mHdrImageUnit);
+        if (pGui->addDropdown("Radiometry/Photometry", kImageList, uHdrUnit))
+        {
+            mHdrImageUnit = static_cast<HdrImage>(uHdrUnit);
         }
 
         pGui->endGroup();
@@ -96,8 +104,9 @@ void ExposurePlayground::onFrameRender(SampleCallbacks* pSample, RenderContext::
         pRenderContext->getGraphicsState()->pushFbo(mpHdrFbo);
         pRenderContext->pushGraphicsVars(mpPassthroughProgVars);
         mpPassthroughProgVars->setTexture("gTexture", mpHdrImage);
+        mpPassthroughProgVars["PerFrameCB"]["gHdrImageUnit"] = static_cast<int32_t>(mHdrImageUnit);
         mpPassthroughPass->execute(pRenderContext.get());
-        pRenderContext->popGraphicsState();
+        pRenderContext->popGraphicsVars();
         pRenderContext->getGraphicsState()->popFbo();
     }
 
@@ -108,7 +117,7 @@ void ExposurePlayground::onFrameRender(SampleCallbacks* pSample, RenderContext::
     pSample->renderText(txt, glm::vec2(10, 10));
 }
 
-void ExposurePlayground::onResizeSwapChain(SampleCallbacks* pSample, uint32_t width, uint32_t height)
+void ExposurePlayground::resizeHdrFbo(uint32_t width, uint32_t height)
 {
     //recreate hdr fbo
     ResourceFormat format = ResourceFormat::RGBA32Float;
@@ -116,4 +125,13 @@ void ExposurePlayground::onResizeSwapChain(SampleCallbacks* pSample, uint32_t wi
     desc.setDepthStencilTarget(ResourceFormat::D16Unorm);
     desc.setColorTarget(0u, format);
     mpHdrFbo = FboHelper::create2D(width, height, desc);
+}
+
+void ExposurePlayground::onResizeSwapChain(SampleCallbacks* pSample, uint32_t width, uint32_t height)
+{
+    if (mpHdrFbo == nullptr)
+    {
+        // only resize it if HDR fbo is not created
+        resizeHdrFbo(width, height);
+    }
 }

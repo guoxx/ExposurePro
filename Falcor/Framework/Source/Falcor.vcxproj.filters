@@ -2315,5 +2315,11 @@
     <None Include="Data\Effects\VisibilityPass.ps.slang">
       <Filter>Data\Effects</Filter>
     </None>
+    <None Include="Data\Effects\CalcLuminance.ps.slang">
+      <Filter>Data\Effects</Filter>
+    </None>
+    <None Include="Data\Effects\Exposure.slang">
+      <Filter>Data\Effects</Filter>
+    </None>
   </ItemGroup>
 </Project>

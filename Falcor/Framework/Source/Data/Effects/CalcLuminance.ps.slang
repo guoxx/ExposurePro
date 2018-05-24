@@ -26,22 +26,65 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
-Texture2D	gTexture : register(t0);
-SamplerState	gSampler : register(s19);
+__import Helpers;
 
-cbuffer PerFrameCB : register(b0)
-{
-    int gHdrImageUnit;
-};
+SamplerState gColorSampler;
+Texture2D gColorTex;
 
-float4 main(float2 texC  : TEXCOORD) : SV_TARGET0
+float meteringFunc(float2 texC)
 {
-    float4 v = gTexture.Sample(gSampler, texC);
-    if (gHdrImageUnit == 0)
+    return 1.0;
+}
+
+float4 main(float2 texC  : TEXCOORD,
+            float4 posH  : SV_POSITION) : SV_TARGET0
+{
+    float texWidth, texHeight;
+    gColorTex.GetDimensions(texWidth, texHeight);
+
+    int2 iPos = int2(posH.xy);
+    float2 coords[4] = {iPos * 2, iPos * 2 + int2(1, 0), iPos * 2 + int2(0, 1), iPos * 2 + int2(1, 1)};
+
+    float logLuminance = 0;
+    float weight = 0;
+    float cnt = 0;
+    for (int i = 0; i < 4; ++i)
     {
-        // convert from Radiometry to Photometry
-        v.xyz *= 683.0;
+        if (coords[i].x < texWidth && coords[i].y < texHeight)
+        {
+            float4 color = gColorTex[coords[i]];
+
+#if defined _CALC_LOG2_LUMINANCE
+
+            float luminance = max(0.0001, calcLuminance(color.rgb));
+            float w = meteringFunc(coords[i] / (texWidth, texHeight));
+
+            logLuminance += log2(luminance) * w;
+            weight += w;
+            cnt += 1;
+
+#elif defined _LUMINANCE_REDUCTION
+
+            float localLogLuma = color.r;
+            float localWeight = color.g;
+            if (localWeight > 0)
+            {
+                logLuminance += localLogLuma;
+                weight += localWeight;
+                cnt += 1;
+            }
+
+#else
+#error nothing
+#endif
+        }
     }
 
-    return v;
+    if (cnt > 0)
+    {
+        logLuminance /= cnt;
+        weight /= cnt;
+    }
+
+    return float4(logLuminance * weight, weight, 0, 1);
 }

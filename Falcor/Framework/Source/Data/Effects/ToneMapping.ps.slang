@@ -26,33 +26,52 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
+#include "HostDeviceData.h"
+
+__import Exposure;
+__import Helpers;
+
 SamplerState gLuminanceTexSampler : register(s0);
 SamplerState gColorSampler : register(s1);
 
 Texture2D gColorTex;
 Texture2D gLuminanceTex;
 
+struct Stats
+{
+    float exposure;
+    float avgLuminance;
+    float EV;
+    float luminance;
+};
+
+RWStructuredBuffer<Stats> gExposureStats;
+
 cbuffer PerImageCB : register(b0)
 {
     float gExposureKey;
     float gMaxWhiteLuminance;
-    float gLuminanceLod;
     float gWhiteScale;
-};
+    float dummy;
 
-float calcLuminance(float3 color)
-{
-    const float3 YWeight = { 0.212671f, 0.715160f, 0.072169f };
-    return dot(color.rgb, YWeight);
-}
+    CameraSettings gCamSettings;
+};
 
 float3 calcExposedColor(float3 color, float2 texC)
 {
-    float pixelLuminance = calcLuminance(color);
-    float avgLuminance = gLuminanceTex.SampleLevel(gLuminanceTexSampler, texC, gLuminanceLod).r;
-    avgLuminance = exp2(avgLuminance);
-    float exposedLuminance = (gExposureKey / avgLuminance);
-    return exposedLuminance*color;
+    float2 avgLogLuminance = gLuminanceTex.SampleLevel(gLuminanceTexSampler, texC, 0).rg;
+    float avgLuminance = exp2(avgLogLuminance.r / avgLogLuminance.g);
+
+    float EV;
+    float exposure;
+    float3 exposedColor = getExposedColor(gCamSettings, color, avgLuminance, exposure, EV);
+
+    gExposureStats[0].exposure = exposure;
+    gExposureStats[0].avgLuminance = avgLuminance;
+    gExposureStats[0].EV = EV;
+    gExposureStats[0].luminance = convertEV100ToLuminance(EV);
+
+    return exposedColor;
 }
 
 float3 linearToneMap(float3 color)
@@ -124,28 +143,12 @@ float3 AcesToneMap(float3 color)
     return color;
 }
 
-float meteringFunc(float2 texC)
-{
-    return 1.0;
-}
-
 float4 calcColor(float2 texC)
 {
     float4 color = gColorTex.Sample(gColorSampler, texC);
     float3 exposedColor = calcExposedColor(color.rgb, texC);
 
-#ifdef _LUMINANCE
-
-    float texWidth, texHeight;
-    gColorTex.GetDimensions(texWidth, texHeight);
-
-    float luminance = calcLuminance(color.xyz);
-    float logLuminance = log2(max(0.0001, luminance));
-    float weight = meteringFunc(texC);
-
-    return float4(logLuminance * weight, weight, 0, 1);
-
-#elif defined _CLAMP
+#if defined _CLAMP
     return color;
 #elif defined _LINEAR
     return float4(linearToneMap(exposedColor), color.a);

@@ -39,19 +39,22 @@ public:
     void onGuiRender(SampleCallbacks* pSample, Gui* pGui) override;
 
 private:
+    void resizeHdrFbo(uint32_t width, uint32_t height);
+
+    enum HdrImage
+    {
+        Radiometry,
+        Photometry,
+    };
+
     std::string mHdrFilename;
     bool mIsHdrImageSRGB = false;
+    HdrImage mHdrImageUnit = Radiometry;
     Texture::SharedPtr mpHdrImage;
 
     GraphicsVars::SharedPtr mpPassthroughProgVars = nullptr;
     FullScreenPass::UniquePtr mpPassthroughPass;
 
-    enum HdrImage
-    {
-        EveningSun,
-        OvercastDay,
-        AtTheWindow
-    };
     static const Gui::DropdownList kImageList;
 
     Fbo::SharedPtr mpHdrFbo;

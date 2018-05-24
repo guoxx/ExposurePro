@@ -31,6 +31,7 @@
 #include "API/FBO.h"
 #include "API/Sampler.h"
 #include "Utils/Gui.h"
+#include "Data/HostDeviceData.h"
 
 namespace Falcor
 {
@@ -55,6 +56,58 @@ namespace Falcor
             HejiHableAlu,       ///< John Hable's ALU approximation of Jim Heji's filmic operator
             HableUc2,           ///< John Hable's filmic tone-mapping used in Uncharted 2
             Aces,               ///< Aces Filmic Tone-Mapping
+        };
+
+        enum class ShutterSpeed
+        {
+            ShutterSpeed1Over1 = 0,
+            ShutterSpeed1Over2,
+            ShutterSpeed1Over4,
+            ShutterSpeed1Over8,
+            ShutterSpeed1Over15,
+            ShutterSpeed1Over30,
+            ShutterSpeed1Over60,
+            ShutterSpeed1Over125,
+            ShutterSpeed1Over250,
+            ShutterSpeed1Over500,
+            ShutterSpeed1Over1000,
+            ShutterSpeed1Over2000,
+            ShutterSpeed1Over4000,
+        };
+
+        enum class FStop
+        {
+            FStop1Point8 = 0,
+            FStop2Point0,
+            FStop2Point2,
+            FStop2Point5,
+            FStop2Point8,
+            FStop3Point2,
+            FStop3Point5,
+            FStop4Point0,
+            FStop4Point5,
+            FStop5Point0,
+            FStop5Point6,
+            FStop6Point3,
+            FStop7Point1,
+            FStop8Point0,
+            FStop9Point0,
+            FStop10Point0,
+            FStop11Point0,
+            FStop13Point0,
+            FStop14Point0,
+            FStop16Point0,
+            FStop18Point0,
+            FStop20Point0,
+            FStop22Point0,
+        };
+
+        enum class ISORating
+        {
+            ISO100 = 0,
+            ISO200,
+            ISO400,
+            ISO800,
         };
 
         /** Create a new object
@@ -106,12 +159,16 @@ namespace Falcor
         Operator mOperator;
         FullScreenPass::UniquePtr mpToneMapPass;
         FullScreenPass::UniquePtr mpLuminancePass;
-        Fbo::SharedPtr mpLuminanceFbo;
+        FullScreenPass::UniquePtr mpLuminanceReductionPass;
+        std::vector<Fbo::SharedPtr> mpLuminanceFbo;
         GraphicsVars::SharedPtr mpToneMapVars;
         GraphicsVars::SharedPtr mpLuminanceVars;
+        GraphicsVars::SharedPtr mpLuminanceReductionVars;
         ConstantBuffer::SharedPtr mpToneMapCBuffer;
         Sampler::SharedPtr mpPointSampler;
         Sampler::SharedPtr mpLinearSampler;
+
+        StructuredBuffer::SharedPtr mpExposureStats;
 
         struct PassBindLocations
         {
@@ -119,15 +176,23 @@ namespace Falcor
             ParameterBlockReflection::BindLocation colorSampler;
             ParameterBlockReflection::BindLocation colorTex;
             ParameterBlockReflection::BindLocation luminanceTex;
+            ParameterBlockReflection::BindLocation statsBuffer;
         } mBindLocations;
 
         struct
         {
             float exposureKey = 0.042f;
             float whiteMaxLuminance = 1.0f;
-            float luminanceLod = 16; // Max possible LOD, will result in global operation
             float whiteScale = 11.2f;
+            float dummy = 0.0f;;
+
+            CameraSettings camSettings;
         } mConstBufferData;
+
+        uint32_t mExposureMode;
+        ShutterSpeed mShutterSpeed;
+        FStop mAperture;
+        ISORating mISO;
 
         void createToneMapPass(Operator op);
         void createLuminancePass();

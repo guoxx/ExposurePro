@@ -29,6 +29,12 @@
 #define _FALCOR_HELPERS_SLANG_
 #include "HostDeviceData.h"
 
+float calcLuminance(float3 color)
+{
+    const float3 YWeight = { 0.212671f, 0.715160f, 0.072169f };
+    return dot(color.rgb, YWeight);
+}
+
 /*******************************************************************
     Spherical map sampling
 *******************************************************************/

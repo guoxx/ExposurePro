@@ -384,6 +384,14 @@ struct DispatchArguments
     uint threadGroupCountZ;
 };
 
+struct CameraSettings
+{
+    int exposureMode;
+    float aperture;
+    float shutterSpeed;
+    float ISO;
+};
+
 #ifdef HOST_CODE
 #undef SamplerState
 #undef Texture2D
