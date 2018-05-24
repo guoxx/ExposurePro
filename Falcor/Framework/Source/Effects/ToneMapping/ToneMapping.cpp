@@ -70,7 +70,7 @@ namespace Falcor
         uint32_t bytesPerChannel = getFormatBytesPerBlock(srcFormat) / getFormatChannelCount(srcFormat);
         
         // Find the required texture size and format
-        ResourceFormat luminanceFormat = (bytesPerChannel == 32) ? ResourceFormat::R32Float : ResourceFormat::R16Float;
+        ResourceFormat luminanceFormat = (bytesPerChannel == 32) ? ResourceFormat::RG32Float : ResourceFormat::RG16Float;
         uint32_t requiredHeight = getLowerPowerOf2(pSrcFbo->getHeight());
         uint32_t requiredWidth = getLowerPowerOf2(pSrcFbo->getWidth());
 

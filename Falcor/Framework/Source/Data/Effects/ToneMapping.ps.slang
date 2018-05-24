@@ -42,7 +42,8 @@ cbuffer PerImageCB : register(b0)
 
 float calcLuminance(float3 color)
 {
-    return dot(color.xyz, float3(0.299f, 0.587f, 0.114f));
+    const float3 YWeight = { 0.212671f, 0.715160f, 0.072169f };
+    return dot(color.rgb, YWeight);
 }
 
 float3 calcExposedColor(float3 color, float2 texC)
@@ -123,20 +124,27 @@ float3 AcesToneMap(float3 color)
     return color;
 }
 
+float meteringFunc(float2 texC)
+{
+    return 1.0;
+}
+
 float4 calcColor(float2 texC)
 {
     float4 color = gColorTex.Sample(gColorSampler, texC);
     float3 exposedColor = calcExposedColor(color.rgb, texC);
+
 #ifdef _LUMINANCE
+
+    float texWidth, texHeight;
+    gColorTex.GetDimensions(texWidth, texHeight);
+
     float luminance = calcLuminance(color.xyz);
-    luminance = log2(max(0.0001, luminance));
+    float logLuminance = log2(max(0.0001, luminance));
+    float weight = meteringFunc(texC);
 
-    // Workaround for some Vulkan drivers rasterizing INF values in certain scenes.
-#ifdef FALCOR_VK
-    luminance = min(luminance, 10000);
-#endif
+    return float4(logLuminance * weight, weight, 0, 1);
 
-    return float4(luminance, 0, 0, 1);
 #elif defined _CLAMP
     return color;
 #elif defined _LINEAR
