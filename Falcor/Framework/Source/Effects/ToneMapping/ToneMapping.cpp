@@ -141,8 +141,9 @@ namespace Falcor
         samplerDesc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Point);
         mpLinearSampler = Sampler::create(samplerDesc);
 
+        mExposureMode = ExposureMode_Automatic;
+
         // Sunny 16 rule : https://en.wikipedia.org/wiki/Sunny_16_rule
-        mExposureMode = ExposureMode_Manual_SOS;
         mShutterSpeed = ShutterSpeed::ShutterSpeed1Over125;
         mAperture = FStop::FStop16Point0;
         mISO = ISORating::ISO100;
@@ -150,6 +151,7 @@ namespace Falcor
         mConstBufferData.camSettings.shutterSpeed = getShutterSpeedValue(int32_t(mShutterSpeed));
         mConstBufferData.camSettings.aperture = getApertureFNumber(int32_t(mAperture));
         mConstBufferData.camSettings.ISO = getISORatingValue(int32_t(mISO));
+        mConstBufferData.camSettings.exposureCompensation = mExposureCompensation;
     }
 
     ToneMapping::UniquePtr ToneMapping::create(Operator op)
@@ -206,7 +208,7 @@ namespace Falcor
         mpToneMapVars->getDefaultBlock()->setSrv(mBindLocations.colorTex, 0, pSrc->getColorTexture(0)->getSRV());
         mpLuminanceVars->getDefaultBlock()->setSrv(mBindLocations.colorTex, 0, pSrc->getColorTexture(0)->getSRV());
         mpToneMapVars->getDefaultBlock()->setSampler(mBindLocations.colorSampler, 0, mpPointSampler);
-        mpLuminanceVars->getDefaultBlock()->setSampler(mBindLocations.colorSampler, 0, mpLinearSampler);
+        //mpLuminanceVars->getDefaultBlock()->setSampler(mBindLocations.colorSampler, 0, mpLinearSampler);
         mpToneMapVars->getDefaultBlock()->setStructuredBuffer("gExposureStats", mpExposureStats);
 
         //Calculate luminance
@@ -303,25 +305,33 @@ namespace Falcor
                 mConstBufferData.camSettings.exposureMode = mExposureMode;
             }
 
-            uint32_t shutterSpeedIndex = static_cast<uint32_t>(mShutterSpeed);
-            if (pGui->addDropdown("Shutter Speed", kShutterSpeedList, shutterSpeedIndex))
+            if (mExposureMode == ExposureMode_Automatic)
             {
-                mConstBufferData.camSettings.shutterSpeed = getShutterSpeedValue(shutterSpeedIndex);
-                mShutterSpeed = static_cast<ShutterSpeed>(shutterSpeedIndex);
+                pGui->addFloatVar("Exposure Compensation", mExposureCompensation, -10.0f, 10.0f, 0.1f);
+                mConstBufferData.camSettings.exposureCompensation = mExposureCompensation;
             }
-
-            uint32_t apertureIndex = static_cast<uint32_t>(mAperture);
-            if (pGui->addDropdown("Aperture", kFStopList, apertureIndex))
+            else
             {
-                mConstBufferData.camSettings.aperture = getApertureFNumber(apertureIndex);
-                mAperture = static_cast<FStop>(apertureIndex);
-            }
+                uint32_t shutterSpeedIndex = static_cast<uint32_t>(mShutterSpeed);
+                if (pGui->addDropdown("Shutter Speed", kShutterSpeedList, shutterSpeedIndex))
+                {
+                    mConstBufferData.camSettings.shutterSpeed = getShutterSpeedValue(shutterSpeedIndex);
+                    mShutterSpeed = static_cast<ShutterSpeed>(shutterSpeedIndex);
+                }
 
-            uint32_t ISOIndex = static_cast<uint32_t>(mISO);
-            if (pGui->addDropdown("ISO", kISORatingList, ISOIndex))
-            {
-                mConstBufferData.camSettings.ISO = getISORatingValue(ISOIndex);
-                mISO = static_cast<ISORating>(ISOIndex);
+                uint32_t apertureIndex = static_cast<uint32_t>(mAperture);
+                if (pGui->addDropdown("Aperture", kFStopList, apertureIndex))
+                {
+                    mConstBufferData.camSettings.aperture = getApertureFNumber(apertureIndex);
+                    mAperture = static_cast<FStop>(apertureIndex);
+                }
+
+                uint32_t ISOIndex = static_cast<uint32_t>(mISO);
+                if (pGui->addDropdown("ISO", kISORatingList, ISOIndex))
+                {
+                    mConstBufferData.camSettings.ISO = getISORatingValue(ISOIndex);
+                    mISO = static_cast<ISORating>(ISOIndex);
+                }
             }
 
             pGui->addSeparator();

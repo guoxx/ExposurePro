@@ -193,6 +193,7 @@ namespace Falcor
         ShutterSpeed mShutterSpeed;
         FStop mAperture;
         ISORating mISO;
+        float mExposureCompensation = 0.0f;
 
         void createToneMapPass(Operator op);
         void createLuminancePass();

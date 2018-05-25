@@ -49,7 +49,7 @@ private:
 
     std::string mHdrFilename;
     bool mIsHdrImageSRGB = false;
-    HdrImage mHdrImageUnit = Radiometry;
+    HdrImage mHdrImageUnit = Photometry;
     Texture::SharedPtr mpHdrImage;
 
     GraphicsVars::SharedPtr mpPassthroughProgVars = nullptr;

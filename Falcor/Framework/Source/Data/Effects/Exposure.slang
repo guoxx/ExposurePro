@@ -88,6 +88,7 @@ float calcExposure(CameraSettings cameraSettings, float avgLuminance, out float 
     else
     {
         float autoEV100 = computeEV100FromAvgLuminance(avgLuminance);
+        autoEV100 = autoEV100 - cameraSettings.exposureCompensation;
         exposure = convertEV100ToExposure_SBS(autoEV100);
         EV100 = autoEV100;
     }

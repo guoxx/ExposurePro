@@ -390,6 +390,7 @@ struct CameraSettings
     float aperture;
     float shutterSpeed;
     float ISO;
+    float exposureCompensation;
 };
 
 #ifdef HOST_CODE
