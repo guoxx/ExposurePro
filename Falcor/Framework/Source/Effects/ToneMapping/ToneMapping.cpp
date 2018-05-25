@@ -206,12 +206,12 @@ namespace Falcor
 
         //Set shared vars
         mpToneMapVars->getDefaultBlock()->setSrv(mBindLocations.colorTex, 0, pSrc->getColorTexture(0)->getSRV());
-        mpLuminanceVars->getDefaultBlock()->setSrv(mBindLocations.colorTex, 0, pSrc->getColorTexture(0)->getSRV());
         mpToneMapVars->getDefaultBlock()->setSampler(mBindLocations.colorSampler, 0, mpPointSampler);
-        //mpLuminanceVars->getDefaultBlock()->setSampler(mBindLocations.colorSampler, 0, mpLinearSampler);
-        mpToneMapVars->getDefaultBlock()->setStructuredBuffer("gExposureStats", mpExposureStats);
+        mpToneMapVars->getDefaultBlock()->setUav(mBindLocations.statsBuffer, 0, mpExposureStats->getUAV(0));
 
         //Calculate luminance
+        mpLuminanceVars->setTexture("gColorTex", pSrc->getColorTexture(0));;
+        mpLuminanceVars->setSampler("gColorSampler", mpLinearSampler);
         pRenderContext->setGraphicsVars(mpLuminanceVars);
         pState->setFbo(mpLuminanceFbo[0]);
         mpLuminancePass->execute(pRenderContext);
