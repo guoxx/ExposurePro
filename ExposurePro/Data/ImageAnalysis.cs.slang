@@ -56,7 +56,7 @@ void main(uint3 groupID : SV_GroupID, uint3 threadID : SV_GroupThreadID, uint3 d
         for (int y = threadID.y; y < imgHeight; y += NUM_THREAD_)
         {
             float3 color = gImage[int2(x, y)].rgb;
-            //color = linearToSRGB(color);
+            color = linearToSRGB(color);
             //color = sRGBToLinear(color);
             float lum = calcLuminance(color);
 
