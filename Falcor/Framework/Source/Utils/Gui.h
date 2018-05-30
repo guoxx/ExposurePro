@@ -90,6 +90,8 @@ namespace Falcor
         */
         bool onKeyboardEvent(const KeyboardEvent& event);
 
+        void addHistogram(const char text[], std::vector<float> values, const char overlay_text[], float width = 0.0f, float height = 0.0f, float scaleMin = FLT_MAX, float scaleMax = FLT_MAX, glm::vec3 color = glm::vec3(0.90f, 0.70f, 0.00f));
+
         /** Static text
             \param[in] text The string to display
             \param[in] sameLine Optional. If set to true, the widget will appear on the same line as the previous widget

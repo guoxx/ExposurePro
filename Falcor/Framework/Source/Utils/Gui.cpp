@@ -276,6 +276,14 @@ namespace Falcor
         return modified;
     }
 
+    void Gui::addHistogram(const char text[], std::vector<float> values, const char overlay_text[], float width, float height, float scaleMin, float scaleMax, glm::vec3 color)
+    {
+        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(color.r, color.g, color.b, 1.00f));
+        const ImVec2 graph_size{ width, height };
+        ImGui::PlotHistogram(text, values.data(), (int)values.size(), 0, overlay_text, scaleMin, scaleMax, graph_size);
+        ImGui::PopStyleColor(1);
+    }
+
     void Gui::addText(const char text[], bool sameLine)
     {
         if (sameLine) ImGui::SameLine();

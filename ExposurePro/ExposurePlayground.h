@@ -47,6 +47,19 @@ private:
         Photometry,
     };
 
+    enum HistogramMode
+    {
+        None,
+        Luminance = 0x01,
+        R = 0x01 << 1,
+        G = 0x01 << 2,
+        B = 0x01 << 3,
+        All = Luminance | R | G | B,
+    };
+
+    HistogramMode mHistogramMode = None;
+    float mHistogramScaleFactor = 2.0f;
+
     std::string mHdrFilename;
     bool mIsHdrImageSRGB = false;
     HdrImage mHdrImageUnit = Photometry;
@@ -55,10 +68,30 @@ private:
     GraphicsVars::SharedPtr mpPassthroughProgVars = nullptr;
     FullScreenPass::UniquePtr mpPassthroughPass;
 
+    enum
+    {
+        ImageAnalysisSamples = 256,
+
+        HistogramWindowWidth = 480,
+        HistogramWindowHeight = 240,
+        HistogramWindowRightMargin = 20,
+        HistogramWindowTopMargin = 20,
+
+        HistogramGraphWidth = 400,
+        HistogramGraphHeight = 100,
+    };
+    ComputeState::SharedPtr mpImageAnalysisState;
+    ComputeProgram::SharedPtr mpImageAnalysisProg;
+    ComputeVars::SharedPtr mpImageAnalysisVars;
+    StructuredBuffer::SharedPtr mpImageAnalysisBuffer;
+
     static const Gui::DropdownList kImageList;
+    static const Gui::DropdownList kHistogramList;
 
     Fbo::SharedPtr mpHdrFbo;
     ToneMapping::UniquePtr mpToneMapper;
 
     bool loadImage(SampleCallbacks* pSample);
+
+    void renderHistogram(Gui* pGui) const;
 };
